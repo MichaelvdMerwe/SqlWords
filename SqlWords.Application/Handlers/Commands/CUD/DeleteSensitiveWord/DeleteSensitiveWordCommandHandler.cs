@@ -2,24 +2,32 @@
 
 using SqlWords.Domain.Entities;
 using SqlWords.Infrastructure.Repositories;
+using SqlWords.Infrastructure.Repositories.SensitiveWords;
+using SqlWords.Service.Caching.Service;
 
 namespace SqlWords.Application.Handlers.Commands.CUD.DeleteSensitiveWord
 {
-	public record DeleteSensitiveWordCommand(long Id) : IRequest<bool>;
 
-	public class DeleteSensitiveWordCommandHandler(IRepository<SensitiveWord> repository) : IRequestHandler<DeleteSensitiveWordCommand, bool>
+	public class DeleteSensitiveWordCommandHandler
+	(
+		ISensitiveWordRepository sensitiveWordRepository,
+		ICacheService<string> cacheService
+	) : IRequestHandler<DeleteSensitiveWordCommand, bool>
 	{
-		private readonly IRepository<SensitiveWord> _repository = repository;
+		private readonly IRepository<SensitiveWord> _sensitiveWordRepository = sensitiveWordRepository;
+		private readonly ICacheService<string> _cacheService = cacheService;
 
 		public async Task<bool> Handle(DeleteSensitiveWordCommand request, CancellationToken cancellationToken)
 		{
-			SensitiveWord? word = await _repository.GetAsync(request.Id);
+			SensitiveWord? word = await _sensitiveWordRepository.GetAsync(request.Id);
 			if (word == null)
 			{
 				return false;
 			}
 
-			_ = await _repository.DeleteAsync(request.Id);
+			_ = await _sensitiveWordRepository.DeleteAsync(request.Id);
+
+			await _cacheService.RefreshCacheAsync();
 			return true;
 		}
 	}

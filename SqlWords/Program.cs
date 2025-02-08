@@ -1,3 +1,7 @@
+using System.Data;
+
+using Microsoft.Data.SqlClient;
+
 using SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWord;
 using SqlWords.Application.Handlers.Queries.GetAllSensitiveWords;
 using SqlWords.Infrastructure;
@@ -5,6 +9,10 @@ using SqlWords.Service.Caching.Service;
 using SqlWords.Service.Sanitizer.Service;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+// Ensure Configuration is registered
+IConfiguration configuration = builder.Configuration;
+builder.Services.AddSingleton(configuration);
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -21,6 +29,12 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
 // Register Services
 builder.Services.AddScoped<ICacheService<string>, WordCacheService>();
 builder.Services.AddScoped<ISanitizerService, SanitizerService>();
+
+// Load Connection String
+string connectionString = configuration.GetConnectionString("DefaultConnection");
+
+// Ensure database connection is configured in Infrastructure
+builder.Services.AddScoped<IDbConnection>(sp => new SqlConnection(connectionString));
 
 WebApplication app = builder.Build();
 
