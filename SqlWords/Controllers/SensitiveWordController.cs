@@ -26,9 +26,9 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace SqlWords.Api.Controllers
 {
 	[ApiController]
-	[Route("api/[controller]")]
+	[Route("api/admin/[controller]")]
 	[Produces("application/json")]
-	public class AdminController(IMediator mediator) : ControllerBase
+	public class SensitiveWordController(IMediator mediator) : ControllerBase
 	{
 		private readonly IMediator _mediator = mediator;
 
