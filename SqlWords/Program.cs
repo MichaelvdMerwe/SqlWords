@@ -1,6 +1,8 @@
 using SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWord;
 using SqlWords.Application.Handlers.Queries.GetAllSensitiveWords;
 using SqlWords.Infrastructure;
+using SqlWords.Service.Caching.Service;
+using SqlWords.Service.Sanitizer.Service;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +18,18 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
 	typeof(AddSensitiveWordCommandHandler).Assembly
 ));
 
+// Register Services
+builder.Services.AddScoped<ICacheService<string>, WordCacheService>();
+builder.Services.AddScoped<ISanitizerService, SanitizerService>();
+
 WebApplication app = builder.Build();
+
+// Load cache on startup
+using (IServiceScope scope = app.Services.CreateScope())
+{
+	ICacheService<string> cacheService = scope.ServiceProvider.GetRequiredService<ICacheService<string>>();
+	await cacheService.RefreshCacheAsync(); // Preload cache
+}
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
