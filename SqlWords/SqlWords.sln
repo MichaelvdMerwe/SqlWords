@@ -9,11 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlWords.Domain", "..\SqlWo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlWords.Infrastructure", "..\SqlWords.Infrastructure\SqlWords.Infrastructure.csproj", "{153D75C5-46A3-4EDD-896F-6AE1E52D9360}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlWords.Service.Sanitizer", "..\Sq;Words.Service.Sanitizer\SqlWords.Service.Sanitizer.csproj", "{377D2E3A-06AD-47CB-96BA-388506C541A9}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlWords.Application", "..\SqlWords.Application\SqlWords.Application.csproj", "{B90D38A7-84A3-43E6-B86D-0E8803993FEA}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SqlWords.Services", "SqlWords.Services", "{FD916557-012B-4A25-9ED1-4972725F556C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlWords.Service.Sanitizer", "..\SqlWords.Service.Sanitizer\SqlWords.Service.Sanitizer.csproj", "{BDD39008-39AD-40E8-B284-31E23381E713}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,20 +31,17 @@ Global
 		{153D75C5-46A3-4EDD-896F-6AE1E52D9360}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{153D75C5-46A3-4EDD-896F-6AE1E52D9360}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{153D75C5-46A3-4EDD-896F-6AE1E52D9360}.Release|Any CPU.Build.0 = Release|Any CPU
-		{377D2E3A-06AD-47CB-96BA-388506C541A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{377D2E3A-06AD-47CB-96BA-388506C541A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{377D2E3A-06AD-47CB-96BA-388506C541A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{377D2E3A-06AD-47CB-96BA-388506C541A9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B90D38A7-84A3-43E6-B86D-0E8803993FEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B90D38A7-84A3-43E6-B86D-0E8803993FEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B90D38A7-84A3-43E6-B86D-0E8803993FEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B90D38A7-84A3-43E6-B86D-0E8803993FEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDD39008-39AD-40E8-B284-31E23381E713}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDD39008-39AD-40E8-B284-31E23381E713}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDD39008-39AD-40E8-B284-31E23381E713}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDD39008-39AD-40E8-B284-31E23381E713}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{377D2E3A-06AD-47CB-96BA-388506C541A9} = {FD916557-012B-4A25-9ED1-4972725F556C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CC5B5B1A-B115-4508-B1E6-D4C9391B5D64}

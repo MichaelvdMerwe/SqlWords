@@ -14,14 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Sq" />
-    <ProjectReference Include="..\Sq" />
     <ProjectReference Include="..\SqlWords.Application\SqlWords.Application.csproj" />
     <ProjectReference Include="..\SqlWords.Domain\SqlWords.Domain.csproj" />
     <ProjectReference Include="..\SqlWords.Infrastructure\SqlWords.Infrastructure.csproj" />
-    <ProjectReference Include="Words.Service.Sanitizer\SqlWords.Service.Sanitizer.csproj">
-      <T></T>
-    </ProjectReference>
+    <ProjectReference Include="..\SqlWords.Service.Sanitizer\SqlWords.Service.Sanitizer.csproj" />
   </ItemGroup>
 
 </Project>

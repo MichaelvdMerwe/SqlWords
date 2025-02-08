@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using MediatR;
+
+using Microsoft.AspNetCore.Mvc;
 
 using SqlWords.Api.Controllers.Dto.Sanitizer;
+using SqlWords.Application.Handlers.Queries.SanitizeMessage;
 
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -9,9 +12,9 @@ namespace SqlWords.Api.Controllers
 	[ApiController]
 	[Route("api/[controller]")]
 	[Produces("application/json")]
-	public class SanitizerController(ISanitizerService sanitizerService) : ControllerBase
+	public class SanitizerController(IMediator mediator) : ControllerBase
 	{
-		private readonly ISanitizerService _sanitizerService = sanitizerService;
+		private readonly IMediator _mediator = mediator;
 
 		/// <summary>
 		/// Sanitizes a sentence by replacing sensitive words with ****.
@@ -23,8 +26,8 @@ namespace SqlWords.Api.Controllers
 		[SwaggerResponse(200, "Returns the sanitized sentence", typeof(string))]
 		public async Task<ActionResult<string>> Sanitize([FromBody] SanitizeRequestDto request)
 		{
-			var sanitizedText = await _sanitizerService.SanitizeAsync(request.Sentence);
-			return Ok(new { sanitizedText });
+			string sanitizedMessage = await _mediator.Send(new SanitizeMessageQuery(request.Message));
+			return Ok(new { sanitizedMessage });
 		}
 	}
 }

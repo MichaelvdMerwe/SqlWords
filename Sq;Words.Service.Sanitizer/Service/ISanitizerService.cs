@@ -2,6 +2,6 @@
 {
 	public interface ISanitizerService
 	{
-		string Sanitize(IEnumerable<string> sensitiveWords, string message);
+		public string Sanitize(IEnumerable<string> sensitiveWords, string message);
 	}
 }
