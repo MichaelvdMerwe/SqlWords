@@ -33,7 +33,14 @@
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
-            "projectReferences": {}
+            "projectReferences": {
+              "D:\\SqlWords\\SqlWords.Domain\\SqlWords.Domain.csproj": {
+                "projectPath": "D:\\SqlWords\\SqlWords.Domain\\SqlWords.Domain.csproj"
+              },
+              "D:\\SqlWords\\SqlWords.Infrastructure\\SqlWords.Infrastructure.csproj": {
+                "projectPath": "D:\\SqlWords\\SqlWords.Infrastructure\\SqlWords.Infrastructure.csproj"
+              }
+            }
           }
         },
         "warningProperties": {
@@ -274,6 +281,10 @@
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.4.0, )"
+            },
+            "Swashbuckle.AspNetCore.Annotations": {
+              "target": "Package",
+              "version": "[7.2.0, )"
             }
           },
           "imports": [
