@@ -1,0 +1,8 @@
+﻿CREATE TABLE SensitiveWord (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Word NVARCHAR(100) NOT NULL UNIQUE,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    --IsDeleted BIT NOT NULL DEFAULT 0
+);
+
+CREATE UNIQUE INDEX IX_SensitiveWord_Word ON SensitiveWord (Word);
