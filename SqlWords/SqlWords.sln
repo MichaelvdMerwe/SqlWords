@@ -15,6 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlWords.Service.Sanitizer"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlWords.Service.Caching", "..\SqlWords.Service.Caching\SqlWords.Service.Caching.csproj", "{DB254D77-95CE-4F57-8751-BA81536F475E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{40D62299-B5EB-419D-9951-E7C57556601B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clean", "Clean", "{9005263A-B19D-46B4-AAF4-E6C0118F02C3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,6 +52,13 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B906F6F1-8DDB-4AD6-86B1-9132B0634C73} = {9005263A-B19D-46B4-AAF4-E6C0118F02C3}
+		{153D75C5-46A3-4EDD-896F-6AE1E52D9360} = {9005263A-B19D-46B4-AAF4-E6C0118F02C3}
+		{B90D38A7-84A3-43E6-B86D-0E8803993FEA} = {9005263A-B19D-46B4-AAF4-E6C0118F02C3}
+		{BDD39008-39AD-40E8-B284-31E23381E713} = {40D62299-B5EB-419D-9951-E7C57556601B}
+		{DB254D77-95CE-4F57-8751-BA81536F475E} = {40D62299-B5EB-419D-9951-E7C57556601B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CC5B5B1A-B115-4508-B1E6-D4C9391B5D64}

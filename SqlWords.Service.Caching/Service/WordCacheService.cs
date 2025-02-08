@@ -20,7 +20,7 @@ namespace SqlWords.Service.Caching.Service
 
 		public async Task<IEnumerable<string>> GetCachedItemsAsync()
 		{
-			if (!_memoryCache.TryGetValue(CacheKey, out List<string> words))
+			if (!_memoryCache.TryGetValue(CacheKey, out List<string>? words) || words is null)
 			{
 				words = await LoadWordsFromDatabaseAsync();
 				_ = _memoryCache.Set(CacheKey, words, _cacheDuration);

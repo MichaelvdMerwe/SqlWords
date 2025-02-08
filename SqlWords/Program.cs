@@ -31,7 +31,7 @@ builder.Services.AddScoped<ICacheService<string>, WordCacheService>();
 builder.Services.AddScoped<ISanitizerService, SanitizerService>();
 
 // Load Connection String
-string connectionString = configuration.GetConnectionString("DefaultConnection");
+string connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Database connection string is missing."); ;
 
 // Ensure database connection is configured in Infrastructure
 builder.Services.AddScoped<IDbConnection>(sp => new SqlConnection(connectionString));
