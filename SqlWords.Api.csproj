@@ -15,4 +15,10 @@
     <Folder Include="Controllers\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SqlWords.Application\SqlWords.Application.csproj" />
+    <ProjectReference Include="..\SqlWords.Domain\SqlWords.Domain.csproj" />
+    <ProjectReference Include="..\SqlWords.Infrastructure\SqlWords.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
