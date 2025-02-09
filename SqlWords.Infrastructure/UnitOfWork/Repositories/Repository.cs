@@ -142,6 +142,11 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 
 			try
 			{
+				if (_dbConnection.State == ConnectionState.Closed)
+				{
+					_dbConnection.Open();
+				}
+
 				using (IDbTransaction transaction = _dbConnection.BeginTransaction())
 				{
 					foreach (T entity in entities)
@@ -208,6 +213,11 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 
 			try
 			{
+				if (_dbConnection.State == ConnectionState.Closed)
+				{
+					_dbConnection.Open();
+				}
+
 				using (IDbTransaction transaction = _dbConnection.BeginTransaction())
 				{
 					int rowsAffected = await _dbConnection.ExecuteAsync(sql, transaction);
