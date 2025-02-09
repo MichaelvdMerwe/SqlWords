@@ -32,8 +32,14 @@ Clean.Application:
 
 Clean.Domain:
 - Implement AuditSensitiveWord entity(I want to expirement with joining entities)
+- Maybe move all nuget packages here and just centralize them for ease of updating
 
 Clean.Infrastructure:
 - Fix broken methods for updating and deleting ranges
 - Implement AuditSensitiveWord repositories
 - Figure out transactional implementation using the unit of work pattern
+
+Tests:
+Do test coverage analysis
+Maintain 80% plus code coverage
+Create Core test project to abstract base classes to and implement all needed nuget modules there to centralize maintenance concerns
