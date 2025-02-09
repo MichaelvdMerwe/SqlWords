@@ -21,7 +21,7 @@ namespace SqlWords.Api.Controllers
 		/// </summary>
 		/// <param name="request">The request containing the sentence to sanitize.</param>
 		/// <returns>The sanitized sentence.</returns>
-		[HttpPost]
+		[HttpPost("sanitize")]
 		[SwaggerOperation(Summary = "Sanitize a sentence", Description = "Replaces sensitive words in a sentence with ****.")]
 		[SwaggerResponse(200, "Returns the sanitized sentence", typeof(string))]
 		public async Task<ActionResult<string>> Sanitize([FromBody] SanitizeRequestDto request)

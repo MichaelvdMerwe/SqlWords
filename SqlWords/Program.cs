@@ -1,7 +1,8 @@
-using System.Data;
+﻿using System.Data;
 
 using Microsoft.Data.SqlClient;
 
+using SqlWords.Api.Controllers;
 using SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWord;
 using SqlWords.Application.Handlers.Queries.GetAllSensitiveWords;
 using SqlWords.Infrastructure;
@@ -9,63 +10,75 @@ using SqlWords.Infrastructure.UnitOfWork;
 using SqlWords.Service.Caching.Service;
 using SqlWords.Service.Sanitizer.Service;
 
+Environment.SetEnvironmentVariable("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "0", EnvironmentVariableTarget.Process);
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// Ensure Configuration is registered
+// Load Configuration
 IConfiguration configuration = builder.Configuration;
 builder.Services.AddSingleton(configuration);
 
-// Add services to the container
-builder.Services.AddControllers();
+// Load Connection String
+string connectionString = configuration.GetConnectionString("DefaultConnection")
+	?? throw new InvalidOperationException("Database connection string is missing.");
+
+// Register Database Connection
+builder.Services.AddScoped<IDbConnection>(_ => new SqlConnection(connectionString));
+
+// Register Controllers & API Services
+builder.Services.AddControllers()
+	.AddApplicationPart(typeof(SanitizerController).Assembly)
+	.AddApplicationPart(typeof(SensitiveWordController).Assembly)
+	.AddControllersAsServices();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//Add infrastructure services to the container
+// Add Infrastructure Services
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddScoped(
-	sp => new DapperUnitOfWork(configuration.GetConnectionString("DefaultConnection")
-	?? throw new InvalidOperationException("Database connection string is missing."))
-	);
+builder.Services.AddScoped(_ => new DapperUnitOfWork(connectionString));
 
-
-// Register MediatR
+// Register MediatR for Application Handlers
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
 	typeof(GetAllSensitiveWordsQueryHandler).Assembly,
 	typeof(AddSensitiveWordCommandHandler).Assembly
 ));
 
-// Register Services
+// Register Application Services
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<ICacheService<string>, WordCacheService>();
 builder.Services.AddScoped<ISanitizerService, SanitizerService>();
 
-// Load Connection String
-string connectionString = configuration.GetConnectionString("DefaultConnection")
-	?? throw new InvalidOperationException("Database connection string is missing."); ;
-
-// Ensure database connection is configured in Infrastructure
-builder.Services.AddScoped<IDbConnection>(sp => new SqlConnection(connectionString));
-
+// Build Application
 WebApplication app = builder.Build();
 
-// Load cache on startup
-using (IServiceScope scope = app.Services.CreateScope())
-{
-	ICacheService<string> cacheService = scope.ServiceProvider.GetRequiredService<ICacheService<string>>();
-	await cacheService.RefreshCacheAsync(); // Preload cache
-}
 
-// Configure the HTTP request pipeline
+// Configure Middleware
+app.UseRouting();
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
+
+
+// Ensure Swagger Works in Development
 if (app.Environment.IsDevelopment())
 {
+	Console.WriteLine("Executing Swagger Middleware...");
 	_ = app.UseSwagger();
 	_ = app.UseSwaggerUI(c =>
 	{
 		c.SwaggerEndpoint("/swagger/v1/swagger.json", "SqlWords API v1");
-		c.RoutePrefix = string.Empty;  // Swagger available at root URL
+		c.RoutePrefix = "swagger";
 	});
 }
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
-app.MapControllers();
+//// Load cache on startup
+//app.Lifetime.ApplicationStarted.Register(async () =>
+//{
+//	using IServiceScope scope = app.Services.CreateScope();
+//	ICacheService<string> cacheService = scope.ServiceProvider.GetRequiredService<ICacheService<string>>();
+//	await cacheService.RefreshCacheAsync();
+//});
+
+// Run Application
 app.Run();

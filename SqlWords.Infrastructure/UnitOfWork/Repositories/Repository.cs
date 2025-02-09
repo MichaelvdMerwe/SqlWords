@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
 
 using Dapper;
 
@@ -10,25 +11,27 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 
 		public async Task<IEnumerable<T>> GetAllAsync()
 		{
-			string sql = $"SELECT * FROM {typeof(T).Name}";
+			string tableName = GetTableName();
+			string sql = $"SELECT * FROM {tableName}";
 			return await _dbConnection.QueryAsync<T>(sql);
 		}
 
 		public async Task<T?> GetAsync(long id)
 		{
-			string sql = $"SELECT * FROM {typeof(T).Name} WHERE Id = @Id";
+			string tableName = GetTableName();
+			string sql = $"SELECT * FROM {tableName} WHERE Id = @Id";
 			return await _dbConnection.QuerySingleOrDefaultAsync<T>(sql, new { Id = id });
 		}
 
 		public async Task<long> AddAsync(T entity)
 		{
 			string sql = GenerateInsertQuery() + "; SELECT CAST(SCOPE_IDENTITY() AS BIGINT);";
-			return await _dbConnection.ExecuteAsync(sql, entity);
+			return await _dbConnection.ExecuteScalarAsync<long>(sql, entity);
 		}
 
 		public async Task<List<long>> AddRangeAsync(IEnumerable<T> entities)
 		{
-			string sql = GenerateInsertQuery() + " OUTPUT INSERTED.Id;";
+			string sql = GenerateInsertQuery() + "; SELECT CAST(SCOPE_IDENTITY() AS BIGINT);";
 			IEnumerable<long> insertedIds = await _dbConnection.QueryAsync<long>(sql, entities);
 			return insertedIds.ToList();
 		}
@@ -47,39 +50,56 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 
 		public async Task<int> DeleteAsync(long id)
 		{
-			string sql = $"DELETE FROM {typeof(T).Name} WHERE Id = @Id";
+			string tableName = GetTableName();
+			string sql = $"DELETE FROM {tableName} WHERE Id = @Id";
 			return await _dbConnection.ExecuteAsync(sql, new { Id = id });
 		}
 
 		public async Task<int> DeleteRangeAsync(IEnumerable<T> entities)
 		{
-			string sql = $"DELETE FROM {typeof(T).Name} WHERE Id IN @Ids";
-			object?[] ids = entities.Select(e => e.GetType().GetProperty("Id")?.GetValue(e, null)).ToArray();
+			string tableName = GetTableName();
+			string sql = $"DELETE FROM {tableName} WHERE Id IN @Ids";
+			List<object?> ids = entities.Select(e => e.GetType().GetProperty("Id")?.GetValue(e)).ToList();
 			return await _dbConnection.ExecuteAsync(sql, new { Ids = ids });
 		}
 
 		private static string GenerateInsertQuery()
 		{
 			Type type = typeof(T);
+			string tableName = GetTableName();
+
 			IEnumerable<string> properties = type.GetProperties()
-									 .Where(p => p.Name != "Id") // Skip ID, use identity column as it's auto-incremented
-									 .Select(p => p.Name);
+				.Where(p => p.Name != "Id") // Skip ID (auto-incremented)
+				.Select(p => p.Name);
 
 			string columnNames = string.Join(", ", properties);
 			string paramNames = string.Join(", ", properties.Select(p => "@" + p));
 
-			return $"INSERT INTO {type.Name} ({columnNames}) VALUES ({paramNames})";
+			return $"INSERT INTO {tableName} ({columnNames}) VALUES ({paramNames})";
 		}
 
 		private static string GenerateUpdateQuery()
 		{
 			Type type = typeof(T);
+			string tableName = GetTableName();
+
 			IEnumerable<string> properties = type.GetProperties()
-								 .Where(p => p.Name != "Id")
-								 .Select(p => $"{p.Name} = @{p.Name}");
+				.Where(p => p.Name != "Id") // Skip ID in update
+				.Select(p => $"{p.Name} = @{p.Name}");
 
 			string setClause = string.Join(", ", properties);
-			return $"UPDATE {type.Name} SET {setClause} WHERE Id = @Id";
+			return $"UPDATE {tableName} SET {setClause} WHERE Id = @Id";
+		}
+
+		private static string GetTableName()
+		{
+			Type type = typeof(T);
+			string tableName = type.GetCustomAttributes(typeof(TableAttribute), false)
+								   .FirstOrDefault() is TableAttribute tableAttribute
+				? tableAttribute.Name
+				: type.Name;
+
+			return $"dbo.[{tableName}]"; // Explicit dbo schema
 		}
 	}
 }
