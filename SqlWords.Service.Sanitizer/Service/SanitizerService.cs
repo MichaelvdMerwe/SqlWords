@@ -8,6 +8,8 @@ namespace SqlWords.Service.Sanitizer.Service
 	{
 		private readonly ILogger<SanitizerService> _logger = logger;
 
+		//not entirely happy with this sanitizer. Will need to look at performance, there is also an edge case that i just cant seem to crack with the rejex
+		//try other algorithms
 		public string Sanitize(IEnumerable<string> sensitiveWords, string message)
 		{
 			if (string.IsNullOrWhiteSpace(message))
@@ -20,13 +22,19 @@ namespace SqlWords.Service.Sanitizer.Service
 			{
 				_logger.LogInformation("Sanitizing message.");
 
-				string pattern = string.Join("|", sensitiveWords
-					.Select(word => $@"\b{Regex.Escape(word)}\b")
-					.Distinct()
-				);
+				string sanitizedMessage = message;
 
-				string sanitizedMessage = Regex.Replace(message, pattern, match =>
-					new string('*', match.Length), RegexOptions.IgnoreCase | RegexOptions.Compiled);
+				foreach (string word in sensitiveWords)
+				{
+					string pattern = $@"\b{Regex.Escape(word)}\b";
+
+					sanitizedMessage = Regex.Replace(
+						sanitizedMessage,
+						pattern,
+						match => new string('*', match.Length),
+						RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+					);
+				}
 
 				_logger.LogInformation("Message sanitized successfully.");
 				return sanitizedMessage;
