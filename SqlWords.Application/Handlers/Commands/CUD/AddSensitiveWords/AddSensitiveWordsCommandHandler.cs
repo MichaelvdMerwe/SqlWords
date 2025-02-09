@@ -8,7 +8,7 @@ using SqlWords.Service.Caching.Service;
 namespace SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWords
 {
 
-    public class AddSensitiveWordsCommandHandler(
+	public class AddSensitiveWordsCommandHandler(
 		ISensitiveWordRepository sensitiveWordRepository,
 		ICacheService<string> cacheService
 	) : IRequestHandler<AddSensitiveWordsCommand, List<long>>

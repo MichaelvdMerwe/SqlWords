@@ -6,7 +6,7 @@ using SqlWords.Service.Caching.Service;
 
 namespace SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWord
 {
-    public class AddSensitiveWordCommandHandler
+	public class AddSensitiveWordCommandHandler
 	(
 		ISensitiveWordRepository sensitiveWordRepository,
 		ICacheService<string> cacheService
@@ -18,7 +18,7 @@ namespace SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWord
 		public async Task<long> Handle(AddSensitiveWordCommand request, CancellationToken cancellationToken)
 		{
 			SensitiveWord newWord = new(request.Word);
-			_ = await _sensitiveWordRepository.AddAsync(newWord);
+			newWord.Id = await _sensitiveWordRepository.AddAsync(newWord);
 
 			await _cacheService.RefreshCacheAsync();
 			return newWord.Id;
