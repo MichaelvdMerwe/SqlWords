@@ -5,7 +5,7 @@ using SqlWords.Infrastructure.UnitOfWork.Repositories.SensitiveWords;
 
 namespace SqlWords.Application.Handlers.Queries.GetAllSensitiveWords
 {
-    public class GetAllSensitiveWordsQueryHandler(ISensitiveWordRepository sensitiveWordRepository)
+	public class GetAllSensitiveWordsQueryHandler(ISensitiveWordRepository sensitiveWordRepository)
 		: IRequestHandler<GetAllSensitiveWordsQuery, IEnumerable<SensitiveWord>>
 	{
 		private readonly ISensitiveWordRepository _sensitiveWordRepository = sensitiveWordRepository;

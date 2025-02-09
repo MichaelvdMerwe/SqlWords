@@ -1,4 +1,7 @@
 ﻿namespace SqlWords.Api.Controllers.Dto.Sanitizer
 {
-	public record SanitizeRequestDto(string Message);
+	public class SanitizeRequestDto
+	{
+		public string Message { get; set; } = string.Empty;
+	}
 }

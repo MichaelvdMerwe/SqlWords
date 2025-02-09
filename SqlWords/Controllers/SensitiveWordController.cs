@@ -1,7 +1,12 @@
-﻿using MediatR;
+﻿using FluentValidation;
+using FluentValidation.Results;
+
+using MediatR;
 
 using Microsoft.AspNetCore.Mvc;
 
+using SqlWords.Api.Controllers.Dto.SensitiveWord;
+using SqlWords.Api.Controllers.Dto.SensitiveWords;
 using SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWord;
 using SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWords;
 using SqlWords.Application.Handlers.Commands.CUD.DeleteSensitiveWord;
@@ -20,131 +25,139 @@ namespace SqlWords.Api.Controllers
 	[ApiController]
 	[Route("api/admin/[controller]")]
 	[Produces("application/json")]
-	public class SensitiveWordController(IMediator mediator) : ControllerBase
+	public class SensitiveWordController(
+		IMediator mediator,
+		ILogger<SensitiveWordController> logger,
+		IValidator<AddSensitiveWordDto> addValidator,
+		IValidator<AddSensitiveWordsDto> bulkAddValidator,
+		IValidator<UpdateSensitiveWordDto> updateValidator,
+		IValidator<UpdateSensitiveWordsDto> bulkUpdateValidator,
+		IValidator<DeleteSensitiveWordsDto> bulkDeleteValidator) : ControllerBase
 	{
 		private readonly IMediator _mediator = mediator;
+		private readonly ILogger<SensitiveWordController> _logger = logger;
+		private readonly IValidator<AddSensitiveWordDto> _addValidator = addValidator;
+		private readonly IValidator<AddSensitiveWordsDto> _bulkAddValidator = bulkAddValidator;
+		private readonly IValidator<UpdateSensitiveWordDto> _updateValidator = updateValidator;
+		private readonly IValidator<UpdateSensitiveWordsDto> _bulkUpdateValidator = bulkUpdateValidator;
+		private readonly IValidator<DeleteSensitiveWordsDto> _bulkDeleteValidator = bulkDeleteValidator;
 
-		/// <summary>
-		/// Retrieves all sensitive words.
-		/// </summary>
-		/// <returns>A list of sensitive words.</returns>
+		/// <summary> Retrieves all sensitive words. </summary>
 		[HttpGet]
 		[SwaggerOperation(Summary = "Get all sensitive words", Description = "Retrieves all sensitive words from the database.")]
 		[SwaggerResponse(200, "Returns the list of sensitive words", typeof(IEnumerable<SensitiveWord>))]
 		public async Task<ActionResult<IEnumerable<SensitiveWord>>> GetAll()
 		{
-			IEnumerable<SensitiveWord> sensitiveWords = await _mediator.Send(new GetAllSensitiveWordsQuery());
-			return Ok(sensitiveWords);
+			try
+			{
+				_logger.LogInformation("Fetching all sensitive words.");
+				IEnumerable<SensitiveWord> words = await _mediator.Send(new GetAllSensitiveWordsQuery());
+				return Ok(words);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error retrieving sensitive words.");
+				return StatusCode(500, new { message = "An error occurred while fetching the words." });
+			}
 		}
 
-		/// <summary>
-		/// Adds a new sensitive word.
-		/// </summary>
-		/// <returns>The ID of the created sensitive word.</returns>
-		[HttpPost]
-		[SwaggerOperation(Summary = "Add a new sensitive word", Description = "Creates a new sensitive word and returns its ID.")]
-		[SwaggerResponse(201, "The sensitive word was created successfully", typeof(long))]
-		[SwaggerResponse(400, "Invalid input provided")]
-		public async Task<ActionResult<long>> Add([FromBody] AddSensitiveWordCommand command)
-		{
-			long sensitiveWordId = await _mediator.Send(command);
-			return CreatedAtAction(nameof(GetById), new { id = sensitiveWordId }, sensitiveWordId);
-		}
-
-		/// <summary>
-		/// Retrieves a specific sensitive word by ID.
-		/// </summary>
-		[HttpGet("id/{id:long}")] // ✅ Avoids conflict with GetByWord
-		[SwaggerOperation(Summary = "Get a sensitive word by ID", Description = "Retrieves a single sensitive word by ID.")]
-		[SwaggerResponse(200, "Returns the sensitive word", typeof(SensitiveWord))]
-		[SwaggerResponse(404, "Sensitive word not found")]
+		/// <summary> Retrieves a specific sensitive word by ID. </summary>
+		[HttpGet("id/{id:long}")]
 		public async Task<ActionResult<SensitiveWord>> GetById([FromRoute] long id)
 		{
-			SensitiveWord? sensitiveWord = await _mediator.Send(new GetSensitiveWordByIdQuery(id));
-			return sensitiveWord is null ? NotFound() : Ok(sensitiveWord);
+			SensitiveWord? word = await _mediator.Send(new GetSensitiveWordByIdQuery(id));
+			return word is null ? NotFound(new { message = "Word not found." }) : Ok(word);
 		}
 
-		/// <summary>
-		/// Retrieves a specific sensitive word by its value.
-		/// </summary>
-		[HttpGet("word/{word}")] // ✅ Explicitly names parameter to avoid route conflict
-		[SwaggerOperation(Summary = "Get a sensitive word by value", Description = "Retrieves a single sensitive word by its value.")]
-		[SwaggerResponse(200, "Returns the sensitive word", typeof(SensitiveWord))]
-		[SwaggerResponse(404, "Sensitive word not found")]
+		/// <summary> Retrieves a specific sensitive word by its value. </summary>
+		[HttpGet("word/{word}")]
 		public async Task<ActionResult<SensitiveWord>> GetByWord([FromRoute] string word)
 		{
 			SensitiveWord? sensitiveWord = await _mediator.Send(new GetSensitiveWordByWordQuery(word));
-			return sensitiveWord is null ? NotFound() : Ok(sensitiveWord);
+			return sensitiveWord is null ? NotFound(new { message = "Word not found." }) : Ok(sensitiveWord);
 		}
 
-		/// <summary>
-		/// Updates an existing sensitive word.
-		/// </summary>
-		[HttpPut("{id:long}")]
-		[SwaggerOperation(Summary = "Update a sensitive word", Description = "Updates an existing sensitive word by ID.")]
-		[SwaggerResponse(200, "Word updated successfully")]
-		[SwaggerResponse(400, "ID mismatch")]
-		[SwaggerResponse(404, "Sensitive word not found")]
-		public async Task<IActionResult> Update([FromRoute] long id, [FromBody] UpdateSensitiveWordCommand command)
+		/// <summary> Adds a new sensitive word. </summary>
+		[HttpPost]
+		public async Task<ActionResult<long>> Add([FromBody] AddSensitiveWordDto dto)
 		{
-			if (id != command.Id)
+			ValidationResult validationResult = await _addValidator.ValidateAsync(dto);
+			if (!validationResult.IsValid)
 			{
-				return BadRequest("ID mismatch");
+				return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
 			}
 
-			bool success = await _mediator.Send(command);
-			return success ? Ok() : NotFound();
+			long wordId = await _mediator.Send(new AddSensitiveWordCommand(dto.Word));
+			return CreatedAtAction(nameof(Add), new { id = wordId }, wordId);
 		}
 
-		/// <summary>
-		/// Deletes a sensitive word by ID.
-		/// </summary>
+		/// <summary> Adds multiple sensitive words. </summary>
+		[HttpPost("bulk")]
+		public async Task<ActionResult<List<long>>> AddRange([FromBody] AddSensitiveWordsDto dto)
+		{
+			ValidationResult validationResult = await _bulkAddValidator.ValidateAsync(dto);
+			if (!validationResult.IsValid)
+			{
+				return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+			}
+
+			List<long> wordIds = await _mediator.Send(new AddSensitiveWordsCommand(dto.Words));
+			return Created(nameof(AddRange), wordIds);
+		}
+
+		/// <summary> Updates an existing sensitive word. </summary>
+		[HttpPut("{id:long}")]
+		public async Task<IActionResult> Update([FromRoute] long id, [FromBody] UpdateSensitiveWordDto dto)
+		{
+			if (id != dto.Id)
+			{
+				return BadRequest(new { message = "ID mismatch between route and body." });
+			}
+
+			ValidationResult validationResult = await _updateValidator.ValidateAsync(dto);
+			if (!validationResult.IsValid)
+			{
+				return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+			}
+
+			bool success = await _mediator.Send(new UpdateSensitiveWordCommand(dto.Id, dto.Word));
+			return success ? Ok() : NotFound(new { message = "Word not found." });
+		}
+
+		/// <summary> Updates multiple sensitive words. </summary>
+		[HttpPut("bulk")]
+		public async Task<IActionResult> UpdateRange([FromBody] UpdateSensitiveWordsDto dto)
+		{
+			ValidationResult validationResult = await _bulkUpdateValidator.ValidateAsync(dto);
+			if (!validationResult.IsValid)
+			{
+				return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+			}
+
+			bool success = await _mediator.Send(new UpdateSensitiveWordsCommand(dto.Words));
+			return success ? Ok() : NotFound(new { message = "One or more words were not found." });
+		}
+
+		/// <summary> Deletes a sensitive word by ID. </summary>
 		[HttpDelete("{id:long}")]
-		[SwaggerOperation(Summary = "Delete a sensitive word", Description = "Deletes an existing sensitive word by ID.")]
-		[SwaggerResponse(200, "Word deleted successfully")]
-		[SwaggerResponse(404, "Sensitive word not found")]
 		public async Task<IActionResult> Delete([FromRoute] long id)
 		{
 			bool success = await _mediator.Send(new DeleteSensitiveWordCommand(id));
-			return success ? Ok() : NotFound();
+			return success ? Ok() : NotFound(new { message = "Word not found." });
 		}
 
-		/// <summary>
-		/// Adds multiple sensitive words.
-		/// </summary>
-		[HttpPost("bulk")]
-		[SwaggerOperation(Summary = "Add multiple sensitive words", Description = "Creates multiple sensitive words at once.")]
-		[SwaggerResponse(201, "The sensitive words were created successfully", typeof(List<long>))]
-		public async Task<ActionResult<List<long>>> AddRange([FromBody] AddSensitiveWordsCommand command)
-		{
-			List<long> wordIds = await _mediator.Send(command);
-			return Created("", wordIds);
-		}
-
-		/// <summary>
-		/// Updates multiple sensitive words.
-		/// </summary>
-		[HttpPut("bulk")]
-		[SwaggerOperation(Summary = "Update multiple sensitive words", Description = "Updates multiple sensitive words at once.")]
-		[SwaggerResponse(200, "Words updated successfully")]
-		[SwaggerResponse(404, "One or more sensitive words not found")]
-		public async Task<IActionResult> UpdateRange([FromBody] UpdateSensitiveWordsCommand command)
-		{
-			bool success = await _mediator.Send(command);
-			return success ? Ok() : NotFound();
-		}
-
-		/// <summary>
-		/// Deletes multiple sensitive words.
-		/// </summary>
+		/// <summary> Deletes multiple sensitive words. </summary>
 		[HttpDelete("bulk")]
-		[SwaggerOperation(Summary = "Delete multiple sensitive words", Description = "Deletes multiple sensitive words at once.")]
-		[SwaggerResponse(200, "Words deleted successfully")]
-		[SwaggerResponse(404, "One or more sensitive words not found")]
-		public async Task<IActionResult> DeleteRange([FromBody] DeleteSensitiveWordsCommand command)
+		public async Task<IActionResult> DeleteRange([FromBody] DeleteSensitiveWordsDto dto)
 		{
-			bool success = await _mediator.Send(command);
-			return success ? Ok() : NotFound();
+			ValidationResult validationResult = await _bulkDeleteValidator.ValidateAsync(dto);
+			if (!validationResult.IsValid)
+			{
+				return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+			}
+
+			bool success = await _mediator.Send(new DeleteSensitiveWordsCommand(dto.Ids));
+			return success ? Ok() : NotFound(new { message = "One or more words were not found." });
 		}
 	}
 }

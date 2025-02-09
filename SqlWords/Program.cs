@@ -1,5 +1,7 @@
 ﻿using System.Data;
 
+using FluentValidation;
+
 using Microsoft.Data.SqlClient;
 
 using SqlWords.Api.Controllers;
@@ -10,6 +12,7 @@ using SqlWords.Infrastructure.UnitOfWork;
 using SqlWords.Service.Caching.Service;
 using SqlWords.Service.Sanitizer.Service;
 
+// Create Builder
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Load Configuration
@@ -42,21 +45,26 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
 	typeof(AddSensitiveWordCommandHandler).Assembly
 ));
 
+// Register FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
 // Register Application Services
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<ICacheService<string>, WordCacheService>();
 builder.Services.AddScoped<ISanitizerService, SanitizerService>();
 
+// Register Logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 // Build Application
 WebApplication app = builder.Build();
-
 
 // Configure Middleware
 app.UseRouting();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
-
 
 // Ensure Swagger Works in Development
 if (app.Environment.IsDevelopment())
@@ -70,13 +78,13 @@ if (app.Environment.IsDevelopment())
 	});
 }
 
-//// Load cache on startup
-//app.Lifetime.ApplicationStarted.Register(async () =>
-//{
-//	using IServiceScope scope = app.Services.CreateScope();
-//	ICacheService<string> cacheService = scope.ServiceProvider.GetRequiredService<ICacheService<string>>();
-//	await cacheService.RefreshCacheAsync();
-//});
+// Load cache on startup (optional, uncomment if needed)
+app.Lifetime.ApplicationStarted.Register(async () =>
+{
+	using IServiceScope scope = app.Services.CreateScope();
+	ICacheService<string> cacheService = scope.ServiceProvider.GetRequiredService<ICacheService<string>>();
+	await cacheService.RefreshCacheAsync();
+});
 
 // Run Application
 app.Run();
