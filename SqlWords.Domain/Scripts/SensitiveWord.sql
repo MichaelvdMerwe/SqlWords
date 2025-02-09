@@ -1,8 +1,18 @@
-﻿CREATE TABLE SensitiveWord (
-    Id INT IDENTITY(1,1) PRIMARY KEY,
-    Word NVARCHAR(100) NOT NULL UNIQUE,
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    --IsDeleted BIT NOT NULL DEFAULT 0
-);
+﻿USE SqlWords
+GO
 
-CREATE UNIQUE INDEX IX_SensitiveWord_Word ON SensitiveWord (Word);
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'SensitiveWord' AND TABLE_SCHEMA = 'dbo')
+BEGIN
+    CREATE TABLE dbo.SensitiveWord (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        Word NVARCHAR(100) NOT NULL UNIQUE,
+        CreatedAt DATETIME DEFAULT GETDATE()
+    );
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_SensitiveWord_Word' AND object_id = OBJECT_ID('dbo.SensitiveWord'))
+BEGIN
+    CREATE UNIQUE INDEX IX_SensitiveWord_Word ON dbo.SensitiveWord (Word);
+END
+GO
