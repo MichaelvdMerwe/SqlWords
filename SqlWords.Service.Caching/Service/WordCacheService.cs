@@ -2,11 +2,11 @@
 using Microsoft.Extensions.Configuration;
 
 using SqlWords.Domain.Entities;
-using SqlWords.Infrastructure.Repositories.SensitiveWords;
+using SqlWords.Infrastructure.UnitOfWork.Repositories.SensitiveWords;
 
 namespace SqlWords.Service.Caching.Service
 {
-	public class WordCacheService
+    public class WordCacheService
 	(
 		ISensitiveWordRepository sensitiveWordRepository,
 		IMemoryCache memoryCache,

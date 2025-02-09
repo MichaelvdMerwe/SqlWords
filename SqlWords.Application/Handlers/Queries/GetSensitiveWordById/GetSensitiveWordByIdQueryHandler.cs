@@ -1,11 +1,11 @@
 ﻿using MediatR;
 
 using SqlWords.Domain.Entities;
-using SqlWords.Infrastructure.Repositories.SensitiveWords;
+using SqlWords.Infrastructure.UnitOfWork.Repositories.SensitiveWords;
 
 namespace SqlWords.Application.Handlers.Queries.GetSensitiveWordById
 {
-	public class GetSensitiveWordByIdQueryHandler(ISensitiveWordRepository sensitiveWordRepository)
+    public class GetSensitiveWordByIdQueryHandler(ISensitiveWordRepository sensitiveWordRepository)
 		: IRequestHandler<GetSensitiveWordByIdQuery, SensitiveWord?>
 	{
 		private readonly ISensitiveWordRepository _sensitiveWordRepository = sensitiveWordRepository;

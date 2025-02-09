@@ -1,12 +1,12 @@
 ﻿using MediatR;
 
 using SqlWords.Domain.Entities;
-using SqlWords.Infrastructure.Repositories.SensitiveWords;
+using SqlWords.Infrastructure.UnitOfWork.Repositories.SensitiveWords;
 using SqlWords.Service.Caching.Service;
 
 namespace SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWord
 {
-	public class AddSensitiveWordCommandHandler
+    public class AddSensitiveWordCommandHandler
 	(
 		ISensitiveWordRepository sensitiveWordRepository,
 		ICacheService<string> cacheService
