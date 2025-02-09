@@ -261,10 +261,5 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 
 			return $"dbo.[{tableName}]";
 		}
-
-		Task<List<long>> IRepository<T>.AddRangeAsync(IEnumerable<T> entities)
-		{
-			throw new NotImplementedException();
-		}
 	}
 }

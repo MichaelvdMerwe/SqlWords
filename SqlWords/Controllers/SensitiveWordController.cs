@@ -133,19 +133,17 @@ namespace SqlWords.Api.Controllers
 			}
 		}
 
-		/// <summary> Adds multiple sensitive words. </summary>
 		[HttpPost("bulk")]
 		[SwaggerOperation(Summary = "Add multiple sensitive words", Description = "Adds multiple sensitive words at once.")]
-		[SwaggerResponse(201, "Words added successfully", typeof(List<long>))]
+		[SwaggerResponse(201, "Words added successfully", typeof(int))]
 		[SwaggerResponse(400, "Validation failed")]
 		[SwaggerResponse(500, "Internal server error")]
-		public async Task<ActionResult<List<long>>> AddRange([FromBody] AddSensitiveWordsDto dto)
+		public async Task<ActionResult<int>> AddRange([FromBody] AddSensitiveWordsDto dto)
 		{
 			try
 			{
 				_logger.LogInformation("Received request to add {Count} sensitive words.", dto.Words.Count);
 
-				// Validate request
 				ValidationResult validationResult = await _bulkAddValidator.ValidateAsync(dto);
 				if (!validationResult.IsValid)
 				{
@@ -153,11 +151,10 @@ namespace SqlWords.Api.Controllers
 					return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
 				}
 
-				// Execute command
-				List<long> wordIds = await _mediator.Send(new AddSensitiveWordsCommand(dto.Words));
+				int affectedRows = await _mediator.Send(new AddSensitiveWordsCommand(dto.Words));
 
-				_logger.LogInformation("Successfully added {Count} sensitive words.", wordIds.Count);
-				return CreatedAtAction(nameof(AddRange), new { ids = wordIds }, wordIds);
+				_logger.LogInformation("Successfully added {Count} sensitive words.", affectedRows);
+				return CreatedAtAction(nameof(AddRange), new { affectedRows }, affectedRows);
 			}
 			catch (Exception ex)
 			{
