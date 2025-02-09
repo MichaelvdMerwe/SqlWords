@@ -19,10 +19,15 @@ namespace SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWords
 		public async Task<List<long>> Handle(AddSensitiveWordsCommand request, CancellationToken cancellationToken)
 		{
 			List<SensitiveWord> words = request.Words.ConvertAll(word => new SensitiveWord(word));
-			_ = await _sensitiveWordRepository.AddRangeAsync(words);
+			List<long> insertedIds = await _sensitiveWordRepository.AddRangeAsync(words);
+
+			for (int i = 0; i < words.Count; i++)
+			{
+				words[i].Id = insertedIds[i];
+			}
 
 			await _cacheService.RefreshCacheAsync();
-			return words.ConvertAll(w => w.Id);
+			return insertedIds;
 		}
 	}
 }
