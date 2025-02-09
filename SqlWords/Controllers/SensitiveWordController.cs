@@ -208,6 +208,9 @@ namespace SqlWords.Api.Controllers
 		}
 
 		/// <summary> Updates multiple sensitive words. </summary>
+		/// currently not working, need to figure out the dapper implementations for this kind of feature
+		[Obsolete("This API endpoint is not currently supported and will be implemented in a future release.")]
+		[ApiExplorerSettings(IgnoreApi = true)]
 		[HttpPut("bulk")]
 		[SwaggerOperation(Summary = "Update multiple sensitive words", Description = "Updates multiple sensitive words at once.")]
 		[SwaggerResponse(200, "Words updated successfully")]
@@ -277,6 +280,9 @@ namespace SqlWords.Api.Controllers
 		}
 
 		/// <summary> Deletes multiple sensitive words. </summary>
+		/// currently not working, need to figure out the dapper implementations for this kind of feature
+		[Obsolete("This API endpoint is not currently supported and will be implemented in a future release.")]
+		[ApiExplorerSettings(IgnoreApi = true)]
 		[HttpDelete("bulk")]
 		[SwaggerOperation(Summary = "Delete multiple sensitive words", Description = "Deletes multiple sensitive words at once.")]
 		[SwaggerResponse(200, "Words deleted successfully")]
