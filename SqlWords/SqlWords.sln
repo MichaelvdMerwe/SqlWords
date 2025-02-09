@@ -11,9 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlWords.Infrastructure", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlWords.Application", "..\SqlWords.Application\SqlWords.Application.csproj", "{B90D38A7-84A3-43E6-B86D-0E8803993FEA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlWords.Service.Sanitizer", "..\SqlWords.Service.Sanitizer\SqlWords.Service.Sanitizer.csproj", "{BDD39008-39AD-40E8-B284-31E23381E713}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlWords.Service.Sanitizer", "..\SqlWords.Service.Sanitizer\SqlWords.Service.Sanitizer.csproj", "{BDD39008-39AD-40E8-B284-31E23381E713}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlWords.Service.Caching", "..\SqlWords.Service.Caching\SqlWords.Service.Caching.csproj", "{DB254D77-95CE-4F57-8751-BA81536F475E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlWords.Service.Caching", "..\SqlWords.Service.Caching\SqlWords.Service.Caching.csproj", "{DB254D77-95CE-4F57-8751-BA81536F475E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{40D62299-B5EB-419D-9951-E7C57556601B}"
 EndProject
