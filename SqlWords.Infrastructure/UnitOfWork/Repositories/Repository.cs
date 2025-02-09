@@ -86,6 +86,11 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 
 			try
 			{
+				if (_dbConnection.State == ConnectionState.Closed)
+				{
+					_dbConnection.Open();
+				}
+
 				using (IDbTransaction transaction = _dbConnection.BeginTransaction())
 				{
 					int rowsAffected = await _dbConnection.ExecuteAsync(sql, entities, transaction);
