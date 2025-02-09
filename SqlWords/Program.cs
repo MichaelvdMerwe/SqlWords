@@ -10,8 +10,6 @@ using SqlWords.Infrastructure.UnitOfWork;
 using SqlWords.Service.Caching.Service;
 using SqlWords.Service.Sanitizer.Service;
 
-Environment.SetEnvironmentVariable("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "0", EnvironmentVariableTarget.Process);
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Load Configuration
