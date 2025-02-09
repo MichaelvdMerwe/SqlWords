@@ -1,4 +1,4 @@
-﻿-- TODO : enhancement
+﻿-- TODO : enhancement, i want to create an AuditSensitiveWord entity to experiment with joins using dapper
 
 CREATE TABLE Audit_SensitiveWord (
     Id INT IDENTITY(1,1) PRIMARY KEY,
