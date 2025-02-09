@@ -46,6 +46,7 @@ namespace SqlWords.Api.Controllers
 		[HttpGet]
 		[SwaggerOperation(Summary = "Get all sensitive words", Description = "Retrieves all sensitive words from the database.")]
 		[SwaggerResponse(200, "Returns the list of sensitive words", typeof(IEnumerable<SensitiveWord>))]
+		[SwaggerResponse(500, "Internal server error")]
 		public async Task<ActionResult<IEnumerable<SensitiveWord>>> GetAll()
 		{
 			try
@@ -61,12 +62,33 @@ namespace SqlWords.Api.Controllers
 			}
 		}
 
-		/// <summary> Retrieves a specific sensitive word by ID. </summary>
 		[HttpGet("id/{id:long}")]
+		[SwaggerOperation(Summary = "Get a sensitive word by ID", Description = "Retrieves a specific sensitive word from the database by its ID.")]
+		[SwaggerResponse(200, "Returns the sensitive word", typeof(SensitiveWord))]
+		[SwaggerResponse(404, "Word not found")]
+		[SwaggerResponse(500, "Internal server error")]
 		public async Task<ActionResult<SensitiveWord>> GetById([FromRoute] long id)
 		{
-			SensitiveWord? word = await _mediator.Send(new GetSensitiveWordByIdQuery(id));
-			return word is null ? NotFound(new { message = "Word not found." }) : Ok(word);
+			try
+			{
+				_logger.LogInformation("Fetching sensitive word with ID: {Id}", id);
+
+				SensitiveWord? word = await _mediator.Send(new GetSensitiveWordByIdQuery(id));
+
+				if (word is null)
+				{
+					_logger.LogWarning("Sensitive word with ID {Id} not found", id);
+					return NotFound(new { message = "Word not found." });
+				}
+
+				_logger.LogInformation("Successfully retrieved sensitive word with ID: {Id}", id);
+				return Ok(word);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "An error occurred while fetching sensitive word with ID: {Id}", id);
+				return StatusCode(500, new { message = "An unexpected error occurred." });
+			}
 		}
 
 		/// <summary> Retrieves a specific sensitive word by its value. </summary>
@@ -79,85 +101,222 @@ namespace SqlWords.Api.Controllers
 
 		/// <summary> Adds a new sensitive word. </summary>
 		[HttpPost]
+		[SwaggerOperation(Summary = "Add a new sensitive word", Description = "Creates a new sensitive word and returns its ID.")]
+		[SwaggerResponse(201, "The sensitive word was created successfully", typeof(long))]
+		[SwaggerResponse(400, "Invalid input provided")]
+		[SwaggerResponse(500, "Internal server error")]
 		public async Task<ActionResult<long>> Add([FromBody] AddSensitiveWordDto dto)
 		{
-			ValidationResult validationResult = await _addValidator.ValidateAsync(dto);
-			if (!validationResult.IsValid)
+			try
 			{
-				return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
-			}
+				ValidationResult validationResult = await _addValidator.ValidateAsync(dto);
+				if (!validationResult.IsValid)
+				{
+					_logger.LogWarning("Validation failed for AddSensitiveWordDto: {Errors}", validationResult.Errors);
+					return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+				}
 
-			long wordId = await _mediator.Send(new AddSensitiveWordCommand(dto.Word));
-			return CreatedAtAction(nameof(Add), new { id = wordId }, wordId);
+				long wordId = await _mediator.Send(new AddSensitiveWordCommand(dto.Word));
+				_logger.LogInformation("Successfully added a new sensitive word with ID: {WordId}", wordId);
+
+				return CreatedAtAction(nameof(Add), new { id = wordId }, wordId);
+			}
+			catch (ArgumentException ex)
+			{
+				_logger.LogWarning(ex, "Invalid input while adding sensitive word");
+				return BadRequest(new { message = ex.Message });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Unexpected error occurred while adding sensitive word");
+				return StatusCode(500, new { message = "An unexpected error occurred." });
+			}
 		}
 
 		/// <summary> Adds multiple sensitive words. </summary>
 		[HttpPost("bulk")]
+		[SwaggerOperation(Summary = "Add multiple sensitive words", Description = "Adds multiple sensitive words at once.")]
+		[SwaggerResponse(201, "Words added successfully", typeof(List<long>))]
+		[SwaggerResponse(400, "Validation failed")]
+		[SwaggerResponse(500, "Internal server error")]
 		public async Task<ActionResult<List<long>>> AddRange([FromBody] AddSensitiveWordsDto dto)
 		{
-			ValidationResult validationResult = await _bulkAddValidator.ValidateAsync(dto);
-			if (!validationResult.IsValid)
+			try
 			{
-				return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
-			}
+				_logger.LogInformation("Received request to add {Count} sensitive words.", dto.Words.Count);
 
-			List<long> wordIds = await _mediator.Send(new AddSensitiveWordsCommand(dto.Words));
-			return Created(nameof(AddRange), wordIds);
+				// Validate request
+				ValidationResult validationResult = await _bulkAddValidator.ValidateAsync(dto);
+				if (!validationResult.IsValid)
+				{
+					_logger.LogWarning("Validation failed for adding multiple sensitive words.");
+					return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+				}
+
+				// Execute command
+				List<long> wordIds = await _mediator.Send(new AddSensitiveWordsCommand(dto.Words));
+
+				_logger.LogInformation("Successfully added {Count} sensitive words.", wordIds.Count);
+				return CreatedAtAction(nameof(AddRange), new { ids = wordIds }, wordIds);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "An error occurred while adding multiple sensitive words.");
+				return StatusCode(500, new { message = "An unexpected error occurred while adding words." });
+			}
 		}
 
 		/// <summary> Updates an existing sensitive word. </summary>
 		[HttpPut("{id:long}")]
+		[SwaggerOperation(Summary = "Update a sensitive word", Description = "Updates an existing sensitive word by ID.")]
+		[SwaggerResponse(200, "Word updated successfully")]
+		[SwaggerResponse(400, "Validation failed")]
+		[SwaggerResponse(404, "Word not found")]
+		[SwaggerResponse(500, "Internal server error")]
 		public async Task<IActionResult> Update([FromRoute] long id, [FromBody] UpdateSensitiveWordDto dto)
 		{
-			if (id != dto.Id)
+			try
 			{
-				return BadRequest(new { message = "ID mismatch between route and body." });
-			}
+				_logger.LogInformation("Received request to update word with ID {Id}.", id);
 
-			ValidationResult validationResult = await _updateValidator.ValidateAsync(dto);
-			if (!validationResult.IsValid)
+				if (id != dto.Id)
+				{
+					_logger.LogWarning("ID mismatch: Route ID {RouteId} does not match Body ID {BodyId}.", id, dto.Id);
+					return BadRequest(new { message = "ID mismatch between route and body." });
+				}
+
+				ValidationResult validationResult = await _updateValidator.ValidateAsync(dto);
+				if (!validationResult.IsValid)
+				{
+					_logger.LogWarning("Validation failed for updating word with ID {Id}.", id);
+					return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+				}
+
+				bool success = await _mediator.Send(new UpdateSensitiveWordCommand(dto.Id, dto.Word));
+
+				if (!success)
+				{
+					_logger.LogWarning("No word found with ID {Id}.", id);
+					return NotFound(new { message = "Word not found." });
+				}
+
+				_logger.LogInformation("Successfully updated word with ID {Id}.", id);
+				return Ok(new { message = "Word updated successfully." });
+			}
+			catch (Exception ex)
 			{
-				return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+				_logger.LogError(ex, "An error occurred while updating word with ID {Id}.", id);
+				return StatusCode(500, new { message = "An unexpected error occurred while updating the word." });
 			}
-
-			bool success = await _mediator.Send(new UpdateSensitiveWordCommand(dto.Id, dto.Word));
-			return success ? Ok() : NotFound(new { message = "Word not found." });
 		}
 
 		/// <summary> Updates multiple sensitive words. </summary>
 		[HttpPut("bulk")]
+		[SwaggerOperation(Summary = "Update multiple sensitive words", Description = "Updates multiple sensitive words at once.")]
+		[SwaggerResponse(200, "Words updated successfully")]
+		[SwaggerResponse(400, "Validation failed")]
+		[SwaggerResponse(404, "One or more sensitive words not found")]
+		[SwaggerResponse(500, "Internal server error")]
 		public async Task<IActionResult> UpdateRange([FromBody] UpdateSensitiveWordsDto dto)
 		{
-			ValidationResult validationResult = await _bulkUpdateValidator.ValidateAsync(dto);
-			if (!validationResult.IsValid)
+			try
 			{
-				return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
-			}
+				_logger.LogInformation("Received request to update multiple words.");
 
-			bool success = await _mediator.Send(new UpdateSensitiveWordsCommand(dto.Words));
-			return success ? Ok() : NotFound(new { message = "One or more words were not found." });
+				ValidationResult validationResult = await _bulkUpdateValidator.ValidateAsync(dto);
+				if (!validationResult.IsValid)
+				{
+					_logger.LogWarning("Validation failed for bulk update.");
+					return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+				}
+
+				bool success = await _mediator.Send(new UpdateSensitiveWordsCommand(dto.Words));
+
+				if (!success)
+				{
+					_logger.LogWarning("One or more words were not found during bulk update.");
+					return NotFound(new { message = "One or more words were not found." });
+				}
+
+				_logger.LogInformation("Successfully updated multiple words.");
+				return Ok(new { message = "Words updated successfully." });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "An error occurred while updating multiple words.");
+				return StatusCode(500, new { message = "An unexpected error occurred while updating words." });
+			}
 		}
 
 		/// <summary> Deletes a sensitive word by ID. </summary>
 		[HttpDelete("{id:long}")]
+		[SwaggerOperation(Summary = "Delete a sensitive word", Description = "Deletes an existing sensitive word by ID.")]
+		[SwaggerResponse(200, "Word deleted successfully")]
+		[SwaggerResponse(404, "Sensitive word not found")]
+		[SwaggerResponse(500, "Internal server error")]
 		public async Task<IActionResult> Delete([FromRoute] long id)
 		{
-			bool success = await _mediator.Send(new DeleteSensitiveWordCommand(id));
-			return success ? Ok() : NotFound(new { message = "Word not found." });
+			try
+			{
+				_logger.LogInformation("Received request to delete word with ID: {WordId}", id);
+
+				// Execute delete command
+				bool success = await _mediator.Send(new DeleteSensitiveWordCommand(id));
+
+				if (!success)
+				{
+					_logger.LogWarning("Word with ID {WordId} not found.", id);
+					return NotFound(new { message = "Word not found." });
+				}
+
+				_logger.LogInformation("Successfully deleted word with ID: {WordId}", id);
+				return Ok(new { message = "Word deleted successfully." });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "An error occurred while deleting word with ID: {WordId}", id);
+				return StatusCode(500, new { message = "An unexpected error occurred while deleting word." });
+			}
 		}
 
 		/// <summary> Deletes multiple sensitive words. </summary>
 		[HttpDelete("bulk")]
+		[SwaggerOperation(Summary = "Delete multiple sensitive words", Description = "Deletes multiple sensitive words at once.")]
+		[SwaggerResponse(200, "Words deleted successfully")]
+		[SwaggerResponse(400, "Validation failed")]
+		[SwaggerResponse(404, "One or more words were not found")]
+		[SwaggerResponse(500, "Internal server error")]
 		public async Task<IActionResult> DeleteRange([FromBody] DeleteSensitiveWordsDto dto)
 		{
-			ValidationResult validationResult = await _bulkDeleteValidator.ValidateAsync(dto);
-			if (!validationResult.IsValid)
+			try
 			{
-				return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
-			}
+				_logger.LogInformation("Received request to bulk delete words: {WordIds}", dto.Ids);
 
-			bool success = await _mediator.Send(new DeleteSensitiveWordsCommand(dto.Ids));
-			return success ? Ok() : NotFound(new { message = "One or more words were not found." });
+				// Validate request
+				ValidationResult validationResult = await _bulkDeleteValidator.ValidateAsync(dto);
+				if (!validationResult.IsValid)
+				{
+					_logger.LogWarning("Validation failed for bulk delete request.");
+					return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+				}
+
+				// Execute delete command
+				bool success = await _mediator.Send(new DeleteSensitiveWordsCommand(dto.Ids));
+
+				if (!success)
+				{
+					_logger.LogWarning("One or more words not found for deletion: {WordIds}", dto.Ids);
+					return NotFound(new { message = "One or more words were not found." });
+				}
+
+				_logger.LogInformation("Successfully deleted words: {WordIds}", dto.Ids);
+				return Ok(new { message = "Words deleted successfully." });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "An error occurred while deleting words: {WordIds}", dto.Ids);
+				return StatusCode(500, new { message = "An unexpected error occurred while deleting words." });
+			}
 		}
 	}
 }

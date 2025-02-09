@@ -8,7 +8,7 @@ using SqlWords.Service.Caching.Service;
 namespace SqlWords.Application.Handlers.Commands.CUD.DeleteSensitiveWord
 {
 
-    public class DeleteSensitiveWordCommandHandler
+	public class DeleteSensitiveWordCommandHandler
 	(
 		ISensitiveWordRepository sensitiveWordRepository,
 		ICacheService<string> cacheService

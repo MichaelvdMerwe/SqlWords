@@ -1,9 +1,10 @@
 ﻿using FluentValidation;
-using SqlWords.Api.Controllers.Dto.SensitiveWords;
+
+using SqlWords.Api.Controllers.Dto.SensitiveWord;
 
 namespace SqlWords.Api.Controllers.Validators.SensitiveWord
 {
-    public class DeleteSensitiveWordsValidator : AbstractValidator<DeleteSensitiveWordsDto>
+	public class DeleteSensitiveWordsValidator : AbstractValidator<DeleteSensitiveWordsDto>
     {
         public DeleteSensitiveWordsValidator()
         {

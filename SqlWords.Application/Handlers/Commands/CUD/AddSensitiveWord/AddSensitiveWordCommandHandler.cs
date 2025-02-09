@@ -17,11 +17,22 @@ namespace SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWord
 
 		public async Task<long> Handle(AddSensitiveWordCommand request, CancellationToken cancellationToken)
 		{
-			SensitiveWord newWord = new(request.Word);
-			newWord.Id = await _sensitiveWordRepository.AddAsync(newWord);
+			if (string.IsNullOrWhiteSpace(request.Word))
+			{
+				throw new ArgumentException("Word cannot be empty.", nameof(request));
+			}
 
-			await _cacheService.RefreshCacheAsync();
-			return newWord.Id;
+			SensitiveWord newWord = new(request.Word);
+			try
+			{
+				newWord.Id = await _sensitiveWordRepository.AddAsync(newWord);
+				await _cacheService.RefreshCacheAsync();
+				return newWord.Id;
+			}
+			catch (Exception ex)
+			{
+				throw new ApplicationException("Failed to add the sensitive word.", ex);
+			}
 		}
 	}
 }

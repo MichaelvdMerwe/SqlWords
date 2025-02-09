@@ -18,7 +18,13 @@ namespace SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWords
 
 		public async Task<List<long>> Handle(AddSensitiveWordsCommand request, CancellationToken cancellationToken)
 		{
+			if (request.Words is null || request.Words.Count == 0)
+			{
+				throw new ArgumentException("Words list cannot be empty.");
+			}
+
 			List<SensitiveWord> words = request.Words.ConvertAll(word => new SensitiveWord(word));
+
 			List<long> insertedIds = await _sensitiveWordRepository.AddRangeAsync(words);
 
 			for (int i = 0; i < words.Count; i++)
@@ -27,6 +33,7 @@ namespace SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWords
 			}
 
 			await _cacheService.RefreshCacheAsync();
+
 			return insertedIds;
 		}
 	}

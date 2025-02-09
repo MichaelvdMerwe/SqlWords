@@ -1,7 +1,7 @@
-﻿namespace SqlWords.Api.Controllers.Dto.SensitiveWords
+﻿namespace SqlWords.Api.Controllers.Dto.SensitiveWord
 {
-    public class UpdateSensitiveWordsDto
-    {
-        public List<(long Id, string Word)> Words { get; set; }
-    }
+	public class UpdateSensitiveWordsDto
+	{
+		public required List<(long Id, string Word)> Words { get; set; }
+	}
 }

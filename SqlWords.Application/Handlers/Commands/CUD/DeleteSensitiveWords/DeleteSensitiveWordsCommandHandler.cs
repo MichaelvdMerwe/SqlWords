@@ -7,7 +7,7 @@ using SqlWords.Service.Caching.Service;
 
 namespace SqlWords.Application.Handlers.Commands.CUD.DeleteSensitiveWords
 {
-    public class DeleteSensitiveWordsCommandHandler
+	public class DeleteSensitiveWordsCommandHandler
 	(
 		ISensitiveWordRepository sensitiveWordRepository,
 		ICacheService<string> cacheService
@@ -18,7 +18,7 @@ namespace SqlWords.Application.Handlers.Commands.CUD.DeleteSensitiveWords
 
 		public async Task<bool> Handle(DeleteSensitiveWordsCommand request, CancellationToken cancellationToken)
 		{
-			List<SensitiveWord> words = [];
+			List<SensitiveWord> wordsToDelete = [];
 
 			foreach (long id in request.Ids)
 			{
@@ -28,10 +28,10 @@ namespace SqlWords.Application.Handlers.Commands.CUD.DeleteSensitiveWords
 					return false;
 				}
 
-				words.Add(word);
+				wordsToDelete.Add(word);
 			}
 
-			_ = await _sensitiveWordRepository.DeleteRangeAsync(words);
+			_ = await _sensitiveWordRepository.DeleteRangeAsync(wordsToDelete);
 
 			await _cacheService.RefreshCacheAsync();
 			return true;

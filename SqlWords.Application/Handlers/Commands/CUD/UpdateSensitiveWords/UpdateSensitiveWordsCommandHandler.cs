@@ -7,7 +7,7 @@ using SqlWords.Service.Caching.Service;
 
 namespace SqlWords.Application.Handlers.Commands.CUD.UpdateSensitiveWords
 {
-    public class UpdateSensitiveWordsCommandHandler
+	public class UpdateSensitiveWordsCommandHandler
 	(
 		ISensitiveWordRepository sensitiveWordRepository,
 		ICacheService<string> cacheService
@@ -28,10 +28,13 @@ namespace SqlWords.Application.Handlers.Commands.CUD.UpdateSensitiveWords
 					return false;
 				}
 
-				wordsToUpdate.Add(new SensitiveWord(NewWord));
+				existingWord.Word = NewWord;
+				wordsToUpdate.Add(existingWord);
 			}
 
 			_ = await _sensitiveWordRepository.UpdateRangeAsync(wordsToUpdate);
+
+			await _cacheService.RefreshCacheAsync();
 			return true;
 		}
 	}
