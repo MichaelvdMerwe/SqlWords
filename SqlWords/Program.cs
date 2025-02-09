@@ -5,6 +5,7 @@ using Microsoft.Data.SqlClient;
 using SqlWords.Application.Handlers.Commands.CUD.AddSensitiveWord;
 using SqlWords.Application.Handlers.Queries.GetAllSensitiveWords;
 using SqlWords.Infrastructure;
+using SqlWords.Infrastructure.UnitOfWork;
 using SqlWords.Service.Caching.Service;
 using SqlWords.Service.Sanitizer.Service;
 
@@ -18,7 +19,14 @@ builder.Services.AddSingleton(configuration);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+//Add infrastructure services to the container
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddScoped(
+	sp => new DapperUnitOfWork(configuration.GetConnectionString("DefaultConnection")
+	?? throw new InvalidOperationException("Database connection string is missing."))
+	);
+
 
 // Register MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
@@ -31,7 +39,8 @@ builder.Services.AddScoped<ICacheService<string>, WordCacheService>();
 builder.Services.AddScoped<ISanitizerService, SanitizerService>();
 
 // Load Connection String
-string connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Database connection string is missing."); ;
+string connectionString = configuration.GetConnectionString("DefaultConnection")
+	?? throw new InvalidOperationException("Database connection string is missing."); ;
 
 // Ensure database connection is configured in Infrastructure
 builder.Services.AddScoped<IDbConnection>(sp => new SqlConnection(connectionString));
