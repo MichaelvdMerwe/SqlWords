@@ -75,14 +75,23 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 			}
 		}
 
-		public async Task<List<long>> AddRangeAsync(IEnumerable<T> entities)
+		public async Task<int> AddRangeAsync(IEnumerable<T> entities)
 		{
-			string sql = Repository<T>.GenerateInsertQuery() + "; SELECT CAST(SCOPE_IDENTITY() AS BIGINT);";
+			if (!entities.Any())
+			{
+				return 0;
+			}
+
+			string sql = Repository<T>.GenerateInsertQuery();
 
 			try
 			{
-				IEnumerable<long> insertedIds = await _dbConnection.QueryAsync<long>(sql, entities);
-				return insertedIds.ToList();
+				using (IDbTransaction transaction = _dbConnection.BeginTransaction())
+				{
+					int rowsAffected = await _dbConnection.ExecuteAsync(sql, entities, transaction);
+					transaction.Commit();
+					return rowsAffected;
+				}
 			}
 			catch (SqlException ex)
 			{
@@ -118,11 +127,26 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 
 		public async Task<int> UpdateRangeAsync(IEnumerable<T> entities)
 		{
+			if (!entities.Any())
+			{
+				return 0;
+			}
+
 			string sql = Repository<T>.GenerateUpdateQuery();
+			int rowsAffected = 0;
 
 			try
 			{
-				return await _dbConnection.ExecuteAsync(sql, entities);
+				using (IDbTransaction transaction = _dbConnection.BeginTransaction())
+				{
+					foreach (T entity in entities)
+					{
+						rowsAffected += await _dbConnection.ExecuteAsync(sql, entity, transaction);
+					}
+					transaction.Commit();
+				}
+
+				return rowsAffected;
 			}
 			catch (SqlException ex)
 			{
@@ -159,13 +183,32 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 
 		public async Task<int> DeleteRangeAsync(IEnumerable<T> entities)
 		{
+			if (!entities.Any())
+			{
+				return 0;
+			}
+
 			string tableName = GetTableName();
-			string sql = $"DELETE FROM {tableName} WHERE Id IN @Ids";
+			IEnumerable<long> ids = entities
+				.Select(e => e.GetType().GetProperty("Id")?.GetValue(e))
+				.Where(id => id != null)
+				.Cast<long>();
+
+			if (!ids.Any())
+			{
+				return 0;
+			}
+
+			string sql = $"DELETE FROM {tableName} WHERE Id IN ({string.Join(",", ids)})";
 
 			try
 			{
-				List<object?> ids = entities.Select(e => e.GetType().GetProperty("Id")?.GetValue(e)).ToList();
-				return await _dbConnection.ExecuteAsync(sql, new { Ids = ids });
+				using (IDbTransaction transaction = _dbConnection.BeginTransaction())
+				{
+					int rowsAffected = await _dbConnection.ExecuteAsync(sql, transaction);
+					transaction.Commit();
+					return rowsAffected;
+				}
 			}
 			catch (SqlException ex)
 			{
@@ -185,11 +228,11 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 			string tableName = GetTableName();
 
 			IEnumerable<string> properties = type.GetProperties()
-				.Where(p => p.Name != "Id") // Skip ID (auto-incremented)
-				.Select(p => p.Name);
+				.Where(p => p.Name != "Id")
+				.Select(p => $"[{p.Name}]");
 
 			string columnNames = string.Join(", ", properties);
-			string paramNames = string.Join(", ", properties.Select(p => "@" + p));
+			string paramNames = string.Join(", ", properties.Select(p => $"@{p.Replace("[", "").Replace("]", "")}"));
 
 			return $"INSERT INTO {tableName} ({columnNames}) VALUES ({paramNames})";
 		}
@@ -200,11 +243,12 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 			string tableName = GetTableName();
 
 			IEnumerable<string> properties = type.GetProperties()
-				.Where(p => p.Name != "Id") // Skip ID in update
-				.Select(p => $"{p.Name} = @{p.Name}");
+				.Where(p => p.Name != "Id")
+				.Select(p => $"[{p.Name}] = @{p.Name}");
 
 			string setClause = string.Join(", ", properties);
-			return $"UPDATE {tableName} SET {setClause} WHERE Id = @Id";
+
+			return $"UPDATE {tableName} SET {setClause} WHERE [Id] = @Id";
 		}
 
 		private static string GetTableName()
@@ -215,7 +259,12 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 				? tableAttribute.Name
 				: type.Name;
 
-			return $"dbo.[{tableName}]"; // Explicit dbo schema
+			return $"dbo.[{tableName}]";
+		}
+
+		Task<List<long>> IRepository<T>.AddRangeAsync(IEnumerable<T> entities)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }
