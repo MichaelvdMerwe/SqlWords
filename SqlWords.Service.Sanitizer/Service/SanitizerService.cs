@@ -20,9 +20,8 @@ namespace SqlWords.Service.Sanitizer.Service
 			{
 				_logger.LogInformation("Sanitizing message.");
 
-				// This regex solves the problem but it might not be performant enough. install benchmark.net and check the performance
 				string pattern = string.Join("|", sensitiveWords
-					.Select(Regex.Escape)
+					.Select(word => $@"\b{Regex.Escape(word)}\b")
 					.Distinct()
 				);
 
