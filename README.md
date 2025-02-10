@@ -9,6 +9,24 @@ Run scripts found in Clean -> Domain -> Scripts
 Run using visual studio
 
 -------------------------------------------------
+Production Deploy:
+-------------------------------------------------
+
+1. Set up a docker container for the application
+2. Add users to the database for production environment
+3. Add a production config (appsettings.production.json)
+4. Publish the api
+5. Deploy on hosting platform
+
+Other details:
+Set up CI/CD
+Set up logging for production environment
+Set up monitoring for application health and performance checks
+Secure the api with HTTPS & TLS certificates
+Implement a load balancer
+Configure database backups and failover strategy
+
+-------------------------------------------------
 
 Future Enhancements:
 
