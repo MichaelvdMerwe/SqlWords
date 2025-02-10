@@ -19,12 +19,12 @@ Production Deploy:
 5. Deploy on hosting platform
 
 Other details:
-Set up CI/CD
-Set up logging for production environment
-Set up monitoring for application health and performance checks
-Secure the api with HTTPS & TLS certificates
-Implement a load balancer
-Configure database backups and failover strategy
+- Set up CI/CD
+- Set up logging for production environment
+- Set up monitoring for application health and performance checks
+- Secure the api with HTTPS & TLS certificates
+- Implement a load balancer
+- Configure database backups and failover strategy
 
 -------------------------------------------------
 
@@ -58,6 +58,6 @@ Clean.Infrastructure:
 - Figure out transactional implementation using the unit of work pattern
 
 Tests:
-Do test coverage analysis
-Maintain 80% plus code coverage
-Create Core test project to abstract base classes to and implement all needed nuget modules there to centralize maintenance concerns
+- Do test coverage analysis
+- Maintain 80% plus code coverage
+- Create Core test project to abstract base classes to and implement all needed nuget modules there to centralize maintenance concerns
