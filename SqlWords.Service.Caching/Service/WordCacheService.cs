@@ -66,10 +66,15 @@ namespace SqlWords.Service.Caching.Service
 				_logger.LogInformation("Loading words from database...");
 				IEnumerable<SensitiveWord> sensitiveWords = await _sensitiveWordRepository.GetAllAsync();
 
-				List<string> words = sensitiveWords
-					.Where(word => !string.IsNullOrWhiteSpace(word.Word))
-					.Select(word => word.Word)
-					.ToList();
+				List<string> words = [];
+
+				foreach (SensitiveWord word in sensitiveWords)
+				{
+					if (word.Word != null && word.Word.Trim().Length > 0) // Equivalent of !string.IsNullOrWhiteSpace
+					{
+						words.Add(word.Word);
+					}
+				}
 
 				_ = _memoryCache.Set(CacheKey, words, _cacheDuration);
 				_logger.LogInformation("Successfully loaded and cached {Count} words from database.", words.Count);

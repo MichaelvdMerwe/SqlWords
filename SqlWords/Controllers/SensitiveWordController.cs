@@ -93,10 +93,32 @@ namespace SqlWords.Api.Controllers
 
 		/// <summary> Retrieves a specific sensitive word by its value. </summary>
 		[HttpGet("word/{word}")]
+		[SwaggerOperation(Summary = "Get a sensitive word by value", Description = "Retrieves a specific sensitive word from the database by its value.")]
+		[SwaggerResponse(200, "Returns the sensitive word", typeof(SensitiveWord))]
+		[SwaggerResponse(404, "Word not found")]
+		[SwaggerResponse(500, "Internal server error")]
 		public async Task<ActionResult<SensitiveWord>> GetByWord([FromRoute] string word)
 		{
-			SensitiveWord? sensitiveWord = await _mediator.Send(new GetSensitiveWordByWordQuery(word));
-			return sensitiveWord is null ? NotFound(new { message = "Word not found." }) : Ok(sensitiveWord);
+			try
+			{
+				_logger.LogInformation("Fetching sensitive word: {Word}", word);
+
+				SensitiveWord? sensitiveWord = await _mediator.Send(new GetSensitiveWordByWordQuery(word));
+
+				if (sensitiveWord is null)
+				{
+					_logger.LogWarning("Sensitive word '{Word}' not found.", word);
+					return NotFound(new { message = "Word not found." });
+				}
+
+				_logger.LogInformation("Successfully retrieved sensitive word: {Word}", word);
+				return Ok(sensitiveWord);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "An error occurred while fetching sensitive word: {Word}", word);
+				return StatusCode(500, new { message = "An unexpected error occurred while fetching the word." });
+			}
 		}
 
 		/// <summary> Adds a new sensitive word. </summary>

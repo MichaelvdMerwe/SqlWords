@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
+using System.Reflection;
+using System.Text;
 
 using Dapper;
 
@@ -130,6 +132,7 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 			}
 		}
 
+		[Obsolete]
 		public async Task<int> UpdateRangeAsync(IEnumerable<T> entities)
 		{
 			if (!entities.Any())
@@ -191,6 +194,7 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 			}
 		}
 
+		[Obsolete]
 		public async Task<int> DeleteRangeAsync(IEnumerable<T> entities)
 		{
 			if (!entities.Any())
@@ -242,14 +246,27 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 			Type type = typeof(T);
 			string tableName = GetTableName();
 
-			IEnumerable<string> properties = type.GetProperties()
-				.Where(p => p.Name != "Id")
-				.Select(p => $"[{p.Name}]");
+			List<string> properties = [];
+			List<string> paramNames = [];
+
+			PropertyInfo[] propertyInfos = type.GetProperties();
+
+			foreach (PropertyInfo property in propertyInfos)
+			{
+				if (property.Name != "Id")
+				{
+					string columnName = $"[{property.Name}]";
+					string paramName = $"@{property.Name}";
+
+					properties.Add(columnName);
+					paramNames.Add(paramName);
+				}
+			}
 
 			string columnNames = string.Join(", ", properties);
-			string paramNames = string.Join(", ", properties.Select(p => $"@{p.Replace("[", "").Replace("]", "")}"));
+			string paramList = string.Join(", ", paramNames);
 
-			return $"INSERT INTO {tableName} ({columnNames}) VALUES ({paramNames})";
+			return $"INSERT INTO {tableName} ({columnNames}) VALUES ({paramList})";
 		}
 
 		private static string GenerateUpdateQuery()
@@ -257,23 +274,30 @@ namespace SqlWords.Infrastructure.UnitOfWork.Repositories
 			Type type = typeof(T);
 			string tableName = GetTableName();
 
-			IEnumerable<string> properties = type.GetProperties()
-				.Where(p => p.Name != "Id")
-				.Select(p => $"[{p.Name}] = @{p.Name}");
+			PropertyInfo[] properties = type.GetProperties();
+			StringBuilder setClauseBuilder = new();
 
-			string setClause = string.Join(", ", properties);
+			for (int i = 0; i < properties.Length; i++)
+			{
+				if (properties[i].Name != "Id")
+				{
+					if (setClauseBuilder.Length > 0)
+					{
+						_ = setClauseBuilder.Append(", ");
+					}
+					_ = setClauseBuilder.AppendFormat("[{0}] = @{0}", properties[i].Name);
+				}
+			}
 
-			return $"UPDATE {tableName} SET {setClause} WHERE [Id] = @Id";
+			return $"UPDATE {tableName} SET {setClauseBuilder} WHERE [Id] = @Id";
 		}
 
 		private static string GetTableName()
 		{
 			Type type = typeof(T);
-			string tableName = type.GetCustomAttributes(typeof(TableAttribute), false)
-								   .FirstOrDefault() is TableAttribute tableAttribute
-				? tableAttribute.Name
-				: type.Name;
+			object[] attributes = type.GetCustomAttributes(typeof(TableAttribute), false);
 
+			string tableName = attributes.Length > 0 && attributes[0] is TableAttribute tableAttribute ? tableAttribute.Name : type.Name;
 			return $"dbo.[{tableName}]";
 		}
 	}
