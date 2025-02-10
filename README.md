@@ -15,7 +15,7 @@ Production Deploy:
 1. Set up a docker container for the application
 2. Add users to the database for production environment
 3. Add a production config (appsettings.production.json)
-4. Publish the api
+4. Publish the api (with release configurations)
 5. Deploy on hosting platform
 
 Other details:
